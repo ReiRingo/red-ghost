@@ -1,0 +1,17 @@
+#i probably don't need this (makefile generates these)
+/*.elf
+/*.gba
+/*.map
+/gfx_build/
+/audio_build/
+
+#do i need these?
+#compile_flags.txt
+build.bat
+
+#stuff i actually don't need
+/build/
+*.o
+*.d
+.DS_Store
+Thumbs.db
