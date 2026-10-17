@@ -1,0 +1,16 @@
+building...
+sample Kick Drum is at 692/300 of 1775
+sample Snare Drum 1 is at 704/304 of 4555
+sample Crash Cymbal 1 is at 716/308 of 17847
+sample Ride Cymbal 1 is at 728/312 of 17532
+sample boom is at 340/1160 of 6901
+sample snare is at 352/1164 of 6901
+sample hat is at 364/1168 of 2584
+demoSpr.c
+demoSpr2.c
+demoMap.c
+shared_palette.c
+main.c
+linking cartridge
+built ... REDGHOST.gba
+ROM fixed!

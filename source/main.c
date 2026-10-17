@@ -8,6 +8,7 @@
 
 #include "demoSpr.h"
 #include "demoSpr2.h"
+#include "demoMap.h"
 #include "shared_palette.h"
 
 static struct oam_attr shadow_oam[128];
@@ -43,12 +44,18 @@ int main(void) {
     oam_set_y(&shadow_oam[1], 64);
     shadow_oam[1].a2 = 16; // あのー……ToT
 
-    dma3_copy(demoSprTiles, (void *)VRAM_OBJ, demoSprTilesLen >> 1, DMA_16);
-    dma3_copy(demoSpr2Tiles, (void *)((u8 *)VRAM_OBJ + demoSprTilesLen), demoSpr2TilesLen >> 1, DMA_16);
+    dma3_copy(demoSprTiles, (void *)VRAM_OBJ, demoSprTilesLen >> 1u, DMA_16);
+    dma3_copy(demoSpr2Tiles, (void *)((u8 *)VRAM_OBJ + demoSprTilesLen), demoSpr2TilesLen >> 1u, DMA_16);
+    
+    dma3_copy(demoMapPal, (void *)PAL_BG, demoMapPalLen, DMA_16);
     dma3_copy(sharedPal, (void *)PAL_OBJ, sharedPalLen, DMA_16);
 
-    oam_submit_shadow(shadow_oam);
+    bg_submit_tiles(demoMapTiles, 0u, demoMapTilesLen);
+    bg_submit_map(demoMapMap, 30u, demoMapMapLen);
 
+    bg_init(0, 0, 30, BG_COLOR_16, BG_SIZE_512X256);
+
+    oam_submit_shadow(shadow_oam);
     display_set_mode(MODE0 | BG0 | BG1 | BG2 | BG3 | OBJ_ON | OBJ_1D);
 
     fade(BLEND_ALL | BLEND_MODE_WHITE, 0, 16, 60);

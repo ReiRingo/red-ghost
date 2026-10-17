@@ -52,8 +52,10 @@ CPPFILES := $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
 SFILES   := $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
 BINFILES := $(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.*)))
 
-GFXPNGS := $(foreach dir,$(GRAPHICS),$(notdir $(wildcard $(dir)/*.png)))
-GFXOBJS := $(GFXPNGS:.png=.o)
+GFX_SPRITES := $(notdir $(wildcard $(GRAPHICS)/*.png))
+GFX_BGS     := $(notdir $(wildcard $(GRAPHICS)/bgs/*.png))
+
+export GFXOBJS  := $(GFX_SPRITES:.png=.o) $(GFX_BGS:.png=.o)
 
 export GFXPNGS
 export GFXOBJS
@@ -88,8 +90,13 @@ $(BUILD):
 	@mkdir -p $(BUILD)
 	@mkdir -p $(GFXBUILD)
 	@mkdir -p $(AUDIOBUILD)
-	@echo Generating sprite graphics and shared palette...
-	@cd $(GFXBUILD) && $(GRIT) $(addprefix ../$(GRAPHICS)/,$(GFXPNGS)) -gB4 -Mw 4 -Mh 4 -pS -Oshared_palette.c -Sshared -ftc
+	@echo building...
+	@if [ -n "$(GFX_BGS)" ]; then \
+		cd $(GFXBUILD) && $(GRIT) $(addprefix ../$(GRAPHICS)/bgs/,$(GFX_BGS)) -gt -gB4 -m -mLs -ftc; \
+	fi
+	@if [ -n "$(GFX_SPRITES)" ]; then \
+		cd $(GFXBUILD) && $(GRIT) $(addprefix ../$(GRAPHICS)/,$(GFX_SPRITES)) -gB4 -Mw 4 -Mh 4 -pS -Oshared_palette.c -Sshared -ftc; \
+	fi
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 
 clean:

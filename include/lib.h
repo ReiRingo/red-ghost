@@ -17,7 +17,7 @@
  * This is a bespoke / proprietary library for my silly hobby
  * gba project
  * frankly, this my first ever gba library,
- * (referencing Tonc's docs) so some things may
+ * (referencing some obscure docs) so some things may
  * be questionable T~T
  */
 
@@ -36,7 +36,9 @@ typedef void (*irq_handler_fn)(void);
 
 #define VRAM ((volatile u16 *)0x06000000)
 #define VRAM_OBJ ((volatile u16*)0x06010000)
+
 #define PAL_OBJ ((volatile u16 *)0x05000200)
+#define PAL_BG ((volatile u16 *)0x05000000)
 
 #define OAM_MEM ((volatile struct oam_attr *)0X07000000)
 #define OAM_MAT_MEM ((volatile struct oam_matrix *)0x07000000)
@@ -58,6 +60,20 @@ typedef void (*irq_handler_fn)(void);
 
 #define DISPSTAT (*(volatile u16 *)0x04000004)
 #define INTR_CHECK (*(volatile u16 *)0x03007FF8)
+
+#define BG0CNT (*(volatile u16*)(0x04000008))
+#define BG1CNT (*(volatile u16*)(0x0400000A))
+#define BG2CNT (*(volatile u16*)(0x0400000C))
+#define BG3CNT (*(volatile u16*)(0x0400000E))
+
+#define BG0HOFS (*(volatile u16*)(0x04000010))
+#define BG0VOFS (*(volatile u16*)(0x04000012))
+#define BG1HOFS (*(volatile u16*)(0x04000014))
+#define BG1VOFS (*(volatile u16*)(0x04000016))
+#define BG2HOFS (*(volatile u16*)(0x04000018))
+#define BG2VOFS (*(volatile u16*)(0x0400001A))
+#define BG3HOFS (*(volatile u16*)(0x0400001C))
+#define BG3VOFS (*(volatile u16*)(0x0400001E))
 
 // dma3
 enum {
@@ -86,6 +102,21 @@ enum {
 // object mapping
     OBJ_ON = 4096,
     OBJ_1D = 0x0040,
+};
+
+enum {
+    BG_PRIO_0 = 0,
+    BG_PRIO_1 = 1,
+    BG_PRIO_2 = 2,
+    BG_PRIO_3 = 3,
+    BG_CHAR_SHIFT = 2, 
+    BG_SCREEN_SHIFT = 8, 
+    BG_COLOR_16 = 0,
+    BG_COLOR_256 = (1 << 7),
+    BG_SIZE_256X256 = (0 << 14),
+    BG_SIZE_512X256 = (1 << 14),
+    BG_SIZE_256X512 = (2 << 14),
+    BG_SIZE_512X512 = (3 << 14),
 };
 
 // screen helpers
@@ -264,6 +295,46 @@ static inline void oam_set_matrix(volatile struct oam_matrix *mat_array, u32 ind
     m->pc = pc;
     m->pd = pd;
 }
+
+static inline void bg_init(u32 bg_index, u32 charblock, u32 screenblock, u32 color_mode, u32 bg_size) {
+    volatile u16 *bg_cnt_registers[] = { &BG0CNT, &BG1CNT, &BG2CNT, &BG3CNT };
+    if (bg_index > 3) return;
+
+    *bg_cnt_registers[bg_index] = (
+        BG_PRIO_1 |
+        (charblock << BG_CHAR_SHIFT) |
+        (screenblock << BG_SCREEN_SHIFT) |
+        color_mode |
+        bg_size
+    );
+}
+
+static inline void bg_submit_map(const void *map_src, u32 screenblock, u32 map_len_bytes) {
+    volatile u16 *dest_addr = VRAM + (screenblock * 1024);
+    dma3_copy(map_src, (void *)dest_addr, map_len_bytes >> 1, DMA_16);
+}
+
+static inline void bg_submit_tiles(const void *tiles_src, u32 charblock, u32 tiles_len_bytes) {
+    // 8192 u16 words=16KBタイルブロック
+    volatile u16 *dest_addr = VRAM + (charblock * 8192u);
+
+    dma3_copy(tiles_src, (void *)dest_addr, tiles_len_bytes >> 1, DMA_16);
+}
+
+static inline void bg_set_scroll(u32 bg_index, s16 x, s16 y) {
+    volatile u16 *bg_ofs_registers[][2] = {
+        {&BG0HOFS, &BG0VOFS},
+        {&BG1HOFS, &BG1VOFS},
+        {&BG2HOFS, &BG2VOFS},
+        {&BG3HOFS, &BG3VOFS}
+    };
+
+    if (bg_index > 3u) return;
+
+    *bg_ofs_registers[bg_index][0] = (u16)x;
+    *bg_ofs_registers[bg_index][1] = (u16)y;
+}
+
 
 u16 key_curr = 0;
 u16 key_prev = 0;
