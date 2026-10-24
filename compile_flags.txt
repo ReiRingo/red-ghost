@@ -1,8 +1,7 @@
--I
-include
--I
-gfx_build
--I
-audio_build
--I
-build
+-Iinclude
+-Igfx_build
+-Iaudio_build
+-Ibuild
+
+-IC:\devkitPro\libgba\include
+
